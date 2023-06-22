@@ -40,27 +40,67 @@ import static org.apache.kafka.connect.transforms.util.Requirements.requireStruc
 public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transformation<R> {
 
   public static final String OVERVIEW_DOC =
-    "Insert a random UUID into a connect record";
+    "Find element in array that meets condition and insert into a connect record";
 
   private interface ConfigName {
+    String ARRAY_FIELD_NAME = "array.field.name";
+    String ELEMENT_FIELD_PATH = "array.element.path";
+    String ELEMENT_VALUE_PATTERN = "element.value";
+    String ELEMENT_VALUE_PATTERN = "element.value.pattern";
     String UUID_FIELD_NAME = "uuid.field.name";
   }
 
   public static final ConfigDef CONFIG_DEF = new ConfigDef()
-    .define(ConfigName.UUID_FIELD_NAME, ConfigDef.Type.STRING, "uuid", ConfigDef.Importance.HIGH,
-      "Field name for UUID");
+    .define(ConfigName.ARRAY_FIELD_NAME,
+            ConfigDef.Type.STRING,
+            null,
+            ConfigDef.Importance.HIGH,
+            "The field name to search."
+            + "If empty, return null")
+    .define(ConfigName.ELEMENT_FIELD_PATH,
+            ConfigDef.Type.STRING,
+            null,
+            ConfigDef.Importance.MEDIUM,
+            "The element path to compare condition to search."
+            + "If empty, compare element")
+    .define("field.value",
+           ConfigDef.Type.STRING,
+           null,
+           ConfigDef.Importance.HIGH,
+           "Expected value to match. Either define this, or a regex pattern")
+    .define(ConfigName.ELEMENT_VALUE_PATTERN,
+            ConfigDef.Type.STRING,
+            null,
+            ConfigDef.Importance.HIGH,
+            "The pattern to match. Either define this, or an expected value")
+    .define(ConfigName.UUID_FIELD_NAME, 
+            ConfigDef.Type.STRING, 
+            "uuid", 
+            ConfigDef.Importance.HIGH,
+            "Field name for UUID");
 
   private static final String PURPOSE = "adding UUID to record";
 
+  private String arrayFieldName;
   private String fieldName;
-
+  private String accessor;
+  private String pattern;
   private Cache<Schema, Schema> schemaUpdateCache;
 
   @Override
   public void configure(Map<String, ?> props) {
     final SimpleConfig config = new SimpleConfig(CONFIG_DEF, props);
+    arrayFieldName = config.getString(ConfigName.ARRAY_FIELD_NAME);
+    accessor = Optional.ofNullable(config.getString(ConfigName.ELEMENT_FIELD_PATH));
+    fieldExpectedValue = Optional.ofNullable(config.getString(ConfigName.ELEMENT_VALUE));
+    fieldValuePattern = Optional.ofNullable(config.getString(ConfigName.ELEMENT_VALUE_PATTERN));
     fieldName = config.getString(ConfigName.UUID_FIELD_NAME);
-
+    final boolean expectedValuePresent = fieldExpectedValue.isPresent();
+    final boolean regexPatternPresent = fieldValuePattern.map(s -> !s.isEmpty()).orElse(false);
+    if (expectedValuePresent == regexPatternPresent) {
+      throw new ConfigException(
+        "Either field.value or field.value.pattern have to be set to apply filter transform");
+    }
     schemaUpdateCache = new SynchronizedCache<>(new LRUCache<Schema, Schema>(16));
   }
 
@@ -78,8 +118,38 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
     final Map<String, Object> value = requireMap(operatingValue(record), PURPOSE);
 
     final Map<String, Object> updatedValue = new HashMap<>(value);
-
-    updatedValue.put(fieldName, getRandomUuid());
+    final List arr = updatedValue[arrayFieldName];
+    final String[] tokens = (accessor != null) ? accessor.split("\\.") : new String[0];
+    Object element = null;
+    
+    for (Map<String, Object> obj : arr) {
+      Object val = obj;
+      boolean found = true;
+      for (String token : tokens) {
+        if (!(val instanceof Map) || !((Map<?, ?>) val).containsKey(token)) {
+          found = false;
+          break;
+        }
+        val = ((Map<?, ?>) val).get(token);
+      }
+      
+      if (found && val instanceof String) {
+        if (expectedValuePresent) {
+            if (((String) val).equals(fieldExpectedValue)) {
+              element = obj;
+              break;
+            }
+          } else {
+            if (((String) val).matches(fieldValuePattern)) {
+              element = obj;
+              break;
+          }
+        }
+      } 
+      
+    }
+      
+    updatedValue.put(fieldName, element);
 
     return newRecord(record, null, updatedValue);
   }
