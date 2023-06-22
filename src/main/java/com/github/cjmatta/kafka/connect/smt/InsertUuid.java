@@ -32,6 +32,7 @@ import org.apache.kafka.connect.transforms.util.SimpleConfig;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.apache.kafka.connect.transforms.util.Requirements.requireMap;
@@ -83,15 +84,16 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
 
   private String arrayFieldName;
   private String fieldName;
-  private String accessor;
-  private String pattern;
+  private Optional<String> elementFieldAccessor;
+  private Optional<String> fieldValuePattern;
+  private Optional<String> fieldValuePattern;
   private Cache<Schema, Schema> schemaUpdateCache;
 
   @Override
   public void configure(Map<String, ?> props) {
     final SimpleConfig config = new SimpleConfig(CONFIG_DEF, props);
     arrayFieldName = config.getString(ConfigName.ARRAY_FIELD_NAME);
-    accessor = Optional.ofNullable(config.getString(ConfigName.ELEMENT_FIELD_PATH));
+    elementFieldAccessor = Optional.ofNullable(config.getString(ConfigName.ELEMENT_FIELD_PATH));
     fieldExpectedValue = Optional.ofNullable(config.getString(ConfigName.ELEMENT_VALUE));
     fieldValuePattern = Optional.ofNullable(config.getString(ConfigName.ELEMENT_VALUE_PATTERN));
     fieldName = config.getString(ConfigName.UUID_FIELD_NAME);
@@ -119,7 +121,7 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
 
     final Map<String, Object> updatedValue = new HashMap<>(value);
     final List arr = updatedValue[arrayFieldName];
-    final String[] tokens = (accessor != null) ? accessor.split("\\.") : new String[0];
+    final String[] tokens = (elementFieldAccessor != null) ? elementFieldAccessor.split("\\.") : new String[0];
     Object element = null;
     
     for (Map<String, Object> obj : arr) {
