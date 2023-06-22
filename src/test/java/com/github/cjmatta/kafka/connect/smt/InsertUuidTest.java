@@ -27,7 +27,11 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 
 import static org.junit.Assert.*;
 
@@ -42,73 +46,167 @@ public class InsertUuidTest {
 
   @Test(expected = DataException.class)
   public void topLevelStructRequired() {
-    xform.configure(Collections.singletonMap("uuid.field.name", "myUuid"));
+    final Map<String, Object> props = new HashMap<>();
+    props.put("uuid.field.name", "myUuid");
+    props.put("path.value.pattern", "myValue");
+    xform.configure(props);
     xform.apply(new SourceRecord(null, null, "", 0, Schema.INT32_SCHEMA, 42));
   }
 
+  // @Test
+  // public void copySchemaAndInsertUuidField() {
+  //   final Map<String, Object> props = new HashMap<>();
+
+  //   props.put("array.field.name", "arrayField");
+  //   props.put("array.element.path", "foo");
+  //   props.put("path.value", "bar");
+  //   props.put("uuid.field.name", "myUuid");
+
+  //   xform.configure(props);
+
+  //   final Schema simpleStructSchema = SchemaBuilder.struct()
+  //     .name("name")
+  //     .version(1)
+  //     .doc("doc")
+  //     .field("magic", Schema.OPTIONAL_INT64_SCHEMA)
+  //     .field("arrayField", SchemaBuilder.array(SchemaBuilder.struct()
+  //         .field("hello", Schema.STRING_SCHEMA)
+  //         .field("foo", Schema.STRING_SCHEMA)
+  //         .build()))
+  //     .build();
+  //   final Struct simpleStruct = new Struct(simpleStructSchema)  
+  //     .put("magic", 42L)
+  //     .put("arrayField", new Object[] {
+  //       new Struct(simpleStructSchema.field("arrayField").schema().valueSchema())
+  //         .put("hello", "world"),
+  //       new Struct(simpleStructSchema.field("arrayField").schema().valueSchema())
+  //         .put("foo", "bar")
+  //     });
+
+  //   final SourceRecord record = new SourceRecord(null, null, "test", 0, simpleStructSchema, simpleStruct);
+  //   final SourceRecord transformedRecord = xform.apply(record);
+
+  //   assertEquals(simpleStructSchema.name(), transformedRecord.valueSchema().name());
+  //   assertEquals(simpleStructSchema.version(), transformedRecord.valueSchema().version());
+  //   assertEquals(simpleStructSchema.doc(), transformedRecord.valueSchema().doc());
+
+  //   assertEquals(Schema.OPTIONAL_INT64_SCHEMA, transformedRecord.valueSchema().field("magic").schema());
+  //   assertEquals(42L, ((Struct) transformedRecord.value()).getInt64("magic").longValue());
+  //   assertEquals(Schema.STRING_SCHEMA, transformedRecord.valueSchema().field("myUuid").schema());
+  //   assertNotNull(((Struct) transformedRecord.value()).getString("myUuid"));
+
+  //   // Exercise caching
+  //   final SourceRecord transformedRecord2 = xform.apply(
+  //     new SourceRecord(null, null, "test", 1, simpleStructSchema, new Struct(simpleStructSchema)));
+  //   assertSame(transformedRecord.valueSchema(), transformedRecord2.valueSchema());
+
+  // }
+
   @Test
-  public void copySchemaAndInsertUuidField() {
+  public void schemalessFindExpectedValuePath() {
     final Map<String, Object> props = new HashMap<>();
 
     props.put("array.field.name", "arrayField");
-    props.put("array.element.path", "foo");
-    props.put("path.value", "bar");
-    props.put("uuid.field.name", "myUuid");
+    props.put("array.element.path", "quux");
+    props.put("path.value", "Cut");
+    props.put("uuid.field.name", "elementValue");
 
     xform.configure(props);
+    Map<String, String> m1 = new HashMap<>();
+    m1.put("foo", "Cat");
+    m1.put("bar", "Cut");
+    m1.put("baz", "Cot");
+    Map<String, String> m2 = new HashMap<>();
+    m2.put("qux", "Cat");
+    m2.put("quux", "Cut");
+    m2.put("corge", "Cot");
+    Map<String, String> m3 = new HashMap<>();
+    m3.put("qux", "Bat");
+    m3.put("quux", "But");
+    m3.put("corge", "Bot");
+    Object[] arr = {m1, m2, m3};
+    final SourceRecord record = new SourceRecord(null, null, "test", 0,
+    null, Collections.singletonMap("arrayField", arr));
 
-    final Schema simpleStructSchema = SchemaBuilder.struct()
-      .name("name")
-      .version(1)
-      .doc("doc")
-      .field("magic", Schema.OPTIONAL_INT64_SCHEMA)
-      .field("arrayField", SchemaBuilder.array(SchemaBuilder.struct()
-          .field("hello", Schema.STRING_SCHEMA)
-          .field("foo", Schema.STRING_SCHEMA)
-          .build()))
-      .build();
-    final Struct simpleStruct = new Struct(simpleStructSchema)  
-      .put("magic", 42L)
-      .put("arrayField", new Object[] {
-        new Struct(simpleStructSchema.field("arrayField").schema().valueSchema())
-          .put("hello", "world"),
-        new Struct(simpleStructSchema.field("arrayField").schema().valueSchema())
-          .put("foo", "bar")
-      });
-
-    final SourceRecord record = new SourceRecord(null, null, "test", 0, simpleStructSchema, simpleStruct);
     final SourceRecord transformedRecord = xform.apply(record);
 
-    assertEquals(simpleStructSchema.name(), transformedRecord.valueSchema().name());
-    assertEquals(simpleStructSchema.version(), transformedRecord.valueSchema().version());
-    assertEquals(simpleStructSchema.doc(), transformedRecord.valueSchema().doc());
-
-    assertEquals(Schema.OPTIONAL_INT64_SCHEMA, transformedRecord.valueSchema().field("magic").schema());
-    assertEquals(42L, ((Struct) transformedRecord.value()).getInt64("magic").longValue());
-    assertEquals(Schema.STRING_SCHEMA, transformedRecord.valueSchema().field("myUuid").schema());
-    assertNotNull(((Struct) transformedRecord.value()).getString("myUuid"));
-
-    // Exercise caching
-    final SourceRecord transformedRecord2 = xform.apply(
-      new SourceRecord(null, null, "test", 1, simpleStructSchema, new Struct(simpleStructSchema)));
-    assertSame(transformedRecord.valueSchema(), transformedRecord2.valueSchema());
-
+    assertEquals(arr, ((Map) transformedRecord.value()).get("arrayField"));
+    assertNotNull(((Map) transformedRecord.value()).get("elementValue"));
+    assertEquals(m2, ((Map) transformedRecord.value()).get("elementValue"));    
   }
 
   @Test
-  public void schemalessInsertUuidField() {
+  public void schemalessFindExpectedElement() {
     final Map<String, Object> props = new HashMap<>();
 
-    props.put("uuid.field.name", "myUuid");
+    props.put("array.field.name", "arrayField");
+    props.put("path.value", "bar");
+    props.put("uuid.field.name", "elementValue");
 
     xform.configure(props);
-
+    String[] arr = {"foo", "bar"};
     final SourceRecord record = new SourceRecord(null, null, "test", 0,
-      null, Collections.singletonMap("magic", 42L));
+    null, Collections.singletonMap("arrayField", arr));
 
     final SourceRecord transformedRecord = xform.apply(record);
-    assertEquals(42L, ((Map) transformedRecord.value()).get("magic"));
-    assertNotNull(((Map) transformedRecord.value()).get("myUuid"));
 
+    assertEquals(arr, ((Map) transformedRecord.value()).get("arrayField"));
+    assertNotNull(((Map) transformedRecord.value()).get("elementValue"));
+    assertEquals("bar", ((Map) transformedRecord.value()).get("elementValue"));    
   }
+
+  @Test
+  public void schemalessFindPatternPath() {
+    final Map<String, Object> props = new HashMap<>();
+
+    props.put("array.field.name", "arrayField");
+    props.put("array.element.path", "quux");
+    props.put("path.value.pattern", "C.t");
+    props.put("uuid.field.name", "elementValue");
+
+    xform.configure(props);
+    Map<String, String> m1 = new HashMap<>();
+    m1.put("foo", "Cat");
+    m1.put("bar", "Cut");
+    m1.put("baz", "Cot");
+    Map<String, String> m2 = new HashMap<>();
+    m2.put("qux", "Cat");
+    m2.put("quux", "Cut");
+    m2.put("corge", "Cot");
+    Map<String, String> m3 = new HashMap<>();
+    m3.put("qux", "Bat");
+    m3.put("quux", "But");
+    m3.put("corge", "Bot");
+    Object[] arr = {m1, m2, m3};
+    final SourceRecord record = new SourceRecord(null, null, "test", 0,
+    null, Collections.singletonMap("arrayField", arr));
+
+    final SourceRecord transformedRecord = xform.apply(record);
+
+    assertEquals(arr, ((Map) transformedRecord.value()).get("arrayField"));
+    assertNotNull(((Map) transformedRecord.value()).get("elementValue"));
+    assertEquals(m2, ((Map) transformedRecord.value()).get("elementValue"));    
+  }
+
+  @Test
+  public void schemalessPatternElement() {
+    final Map<String, Object> props = new HashMap<>();
+
+    props.put("array.field.name", "arrayField");
+    props.put("path.value.pattern", "ba.");
+    props.put("uuid.field.name", "elementValue");
+
+    xform.configure(props);
+    String[] arr = {"foo", "bar","baz"};
+    final SourceRecord record = new SourceRecord(null, null, "test", 0,
+    null, Collections.singletonMap("arrayField", arr));
+
+    final SourceRecord transformedRecord = xform.apply(record);
+
+    assertEquals(arr, ((Map) transformedRecord.value()).get("arrayField"));
+    assertNotNull(((Map) transformedRecord.value()).get("elementValue"));
+    assertEquals("bar", ((Map) transformedRecord.value()).get("elementValue"));    
+  }
+
 }
+

@@ -33,7 +33,7 @@ import org.apache.kafka.connect.transforms.util.SimpleConfig;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -103,7 +103,7 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
     boolean regexPatternPresent = fieldValuePattern.map(s -> !s.isEmpty()).orElse(false);
     if (expectedValuePresent == regexPatternPresent) {
       throw new ConfigException(
-        "Either field.value or field.value.pattern have to be set to apply filter transform");
+        "Either path.value or path.value.pattern have to be set to apply filter transform");
     }
     schemaUpdateCache = new SynchronizedCache<>(new LRUCache<Schema, Schema>(16));
   }
@@ -123,11 +123,11 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
 
     final Map<String, Object> updatedValue = new HashMap<>(value);
     final Object fieldValue = updatedValue.get(arrayFieldName);
-    final Map<?, ?>[] arr = (fieldValue instanceof Map<?, ?>[]) ? (Map<?, ?>[]) fieldValue : null;
+    final Object[] arr = (fieldValue instanceof Object[])? (Object[]) fieldValue : null;
     final String[] tokens = (elementFieldAccessor.isPresent()) ? elementFieldAccessor.get().split("\\.") : new String[0];
     Object element = null;
     
-    for (Map<?, ?> obj : arr) {
+    for (Object obj : arr) {
       Object val = obj;
       boolean found = true;
       for (String token : tokens) {
