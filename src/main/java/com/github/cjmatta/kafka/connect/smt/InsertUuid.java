@@ -85,7 +85,7 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
   private String arrayFieldName;
   private String fieldName;
   private Optional<String> elementFieldAccessor;
-  private Optional<String> fieldValuePattern;
+  private Optional<String> fieldExpectedValue;
   private Optional<String> fieldValuePattern;
   private Cache<Schema, Schema> schemaUpdateCache;
 
