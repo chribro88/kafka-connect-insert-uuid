@@ -45,7 +45,7 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
   private interface ConfigName {
     String ARRAY_FIELD_NAME = "array.field.name";
     String ELEMENT_FIELD_PATH = "array.element.path";
-    String ELEMENT_VALUE_PATTERN = "element.value";
+    String ELEMENT_VALUE = "element.value";
     String ELEMENT_VALUE_PATTERN = "element.value.pattern";
     String UUID_FIELD_NAME = "uuid.field.name";
   }
@@ -63,7 +63,7 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
             ConfigDef.Importance.MEDIUM,
             "The element path to compare condition to search."
             + "If empty, compare element")
-    .define("field.value",
+    .define(ConfigName.ELEMENT_VALUE,
            ConfigDef.Type.STRING,
            null,
            ConfigDef.Importance.HIGH,
