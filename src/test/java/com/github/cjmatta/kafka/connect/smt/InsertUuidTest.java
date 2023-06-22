@@ -50,12 +50,31 @@ public class InsertUuidTest {
   public void copySchemaAndInsertUuidField() {
     final Map<String, Object> props = new HashMap<>();
 
+    props.put("array.field.name", "arrayField");
+    props.put("array.element.path", "foo");
+    props.put("path.value", "bar");
     props.put("uuid.field.name", "myUuid");
 
     xform.configure(props);
 
-    final Schema simpleStructSchema = SchemaBuilder.struct().name("name").version(1).doc("doc").field("magic", Schema.OPTIONAL_INT64_SCHEMA).build();
-    final Struct simpleStruct = new Struct(simpleStructSchema).put("magic", 42L);
+    final Schema simpleStructSchema = SchemaBuilder.struct()
+      .name("name")
+      .version(1)
+      .doc("doc")
+      .field("magic", Schema.OPTIONAL_INT64_SCHEMA)
+      .field("arrayField", SchemaBuilder.array(SchemaBuilder.struct()
+          .field("hello", Schema.STRING_SCHEMA)
+          .field("foo", Schema.STRING_SCHEMA)
+          .build()))
+      .build();
+    final Struct simpleStruct = new Struct(simpleStructSchema)  
+      .put("magic", 42L)
+      .put("arrayField", new Object[] {
+        new Struct(simpleStructSchema.field("arrayField").schema().valueSchema())
+          .put("hello", "world"),
+        new Struct(simpleStructSchema.field("arrayField").schema().valueSchema())
+          .put("foo", "bar")
+      });
 
     final SourceRecord record = new SourceRecord(null, null, "test", 0, simpleStructSchema, simpleStruct);
     final SourceRecord transformedRecord = xform.apply(record);
