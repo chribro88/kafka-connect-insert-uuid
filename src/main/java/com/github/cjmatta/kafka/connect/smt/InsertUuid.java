@@ -48,8 +48,8 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
   private interface ConfigName {
     String ARRAY_FIELD_NAME = "array.field.name";
     String ELEMENT_FIELD_PATH = "array.element.path";
-    String ELEMENT_VALUE = "element.value";
-    String ELEMENT_VALUE_PATTERN = "element.value.pattern";
+    String PATH_VALUE = "path.value";
+    String PATH_VALUE_PATTERN = "path.value.pattern";
     String UUID_FIELD_NAME = "uuid.field.name";
   }
 
@@ -66,12 +66,12 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
             ConfigDef.Importance.MEDIUM,
             "The element path to compare condition to search."
             + "If empty, compare element")
-    .define(ConfigName.ELEMENT_VALUE,
+    .define(ConfigName.PATH_VALUE,
            ConfigDef.Type.STRING,
            null,
            ConfigDef.Importance.HIGH,
            "Expected value to match. Either define this, or a regex pattern")
-    .define(ConfigName.ELEMENT_VALUE_PATTERN,
+    .define(ConfigName.PATH_VALUE_PATTERN,
             ConfigDef.Type.STRING,
             null,
             ConfigDef.Importance.HIGH,
@@ -96,11 +96,11 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
     final SimpleConfig config = new SimpleConfig(CONFIG_DEF, props);
     arrayFieldName = config.getString(ConfigName.ARRAY_FIELD_NAME);
     elementFieldAccessor = Optional.ofNullable(config.getString(ConfigName.ELEMENT_FIELD_PATH));
-    fieldExpectedValue = Optional.ofNullable(config.getString(ConfigName.ELEMENT_VALUE));
-    fieldValuePattern = Optional.ofNullable(config.getString(ConfigName.ELEMENT_VALUE_PATTERN));
+    fieldExpectedValue = Optional.ofNullable(config.getString(ConfigName.PATH_VALUE));
+    fieldValuePattern = Optional.ofNullable(config.getString(ConfigName.PATH_VALUE_PATTERN));
     fieldName = config.getString(ConfigName.UUID_FIELD_NAME);
-    final boolean expectedValuePresent = fieldExpectedValue.isPresent();
-    final boolean regexPatternPresent = fieldValuePattern.map(s -> !s.isEmpty()).orElse(false);
+    boolean expectedValuePresent = fieldExpectedValue.isPresent();
+    boolean regexPatternPresent = fieldValuePattern.map(s -> !s.isEmpty()).orElse(false);
     if (expectedValuePresent == regexPatternPresent) {
       throw new ConfigException(
         "Either field.value or field.value.pattern have to be set to apply filter transform");
