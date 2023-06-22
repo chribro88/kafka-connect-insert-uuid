@@ -139,12 +139,12 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
       
       if (found && val instanceof String) {
         if (expectedValuePresent) {
-            if (((String) val).equals(fieldExpectedValue)) {
+            if (((String) val).equals(fieldExpectedValue.get())) {
               element = obj;
               break;
             }
           } else {
-            if (((String) val).matches(fieldValuePattern)) {
+            if (((String) val).matches(fieldValuePattern.get())) {
               element = obj;
               break;
           }
