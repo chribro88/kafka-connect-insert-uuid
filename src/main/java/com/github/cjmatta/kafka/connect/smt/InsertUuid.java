@@ -122,11 +122,12 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
     final Map<String, Object> value = requireMap(operatingValue(record), PURPOSE);
 
     final Map<String, Object> updatedValue = new HashMap<>(value);
-    final Map<String, Object>[] arr = updatedValue.arrayFieldName;
+    final Object fieldValue = updatedValue.get(arrayFieldName);
+    final Map<?, ?>[] arr = (fieldValue instanceof Map<?, ?>[]) ? (Map<?, ?>[]) fieldValue : null;
     final String[] tokens = (elementFieldAccessor.isPresent()) ? elementFieldAccessor.get().split("\\.") : new String[0];
     Object element = null;
     
-    for (Map<String, Object> obj : arr) {
+    for (Map<?, ?> obj : arr) {
       Object val = obj;
       boolean found = true;
       for (String token : tokens) {
@@ -138,7 +139,7 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
       }
       
       if (found && val instanceof String) {
-        if (expectedValuePresent) {
+        if (fieldExpectedValue.isPresent()) {
             if (((String) val).equals(fieldExpectedValue.get())) {
               element = obj;
               break;
