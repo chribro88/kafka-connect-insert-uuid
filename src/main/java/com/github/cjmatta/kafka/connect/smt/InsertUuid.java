@@ -122,7 +122,7 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
     final Map<String, Object> value = requireMap(operatingValue(record), PURPOSE);
 
     final Map<String, Object> updatedValue = new HashMap<>(value);
-    final List arr = updatedValue[arrayFieldName];
+    final Map<String, Object>[] arr = updatedValue[arrayFieldName];
     final String[] tokens = (elementFieldAccessor != null) ? elementFieldAccessor.split("\\.") : new String[0];
     Object element = null;
     
