@@ -53,54 +53,124 @@ public class InsertUuidTest {
     xform.apply(new SourceRecord(null, null, "", 0, Schema.INT32_SCHEMA, 42));
   }
 
-  // @Test
-  // public void copySchemaAndInsertUuidField() {
-  //   final Map<String, Object> props = new HashMap<>();
+  @Test
+  public void copySchemaAndFindPatternElement() {
+    final Map<String, Object> props = new HashMap<>();
 
-  //   props.put("array.field.name", "arrayField");
-  //   props.put("array.element.path", "foo");
-  //   props.put("path.value", "bar");
-  //   props.put("uuid.field.name", "myUuid");
+    props.put("array.field.name", "arrayField");
+    props.put("array.element.path", "quux");
+    props.put("path.value.pattern", "C.t");
+    props.put("uuid.field.name", "elementValue");
 
-  //   xform.configure(props);
+    xform.configure(props);
 
-  //   final Schema simpleStructSchema = SchemaBuilder.struct()
-  //     .name("name")
-  //     .version(1)
-  //     .doc("doc")
-  //     .field("magic", Schema.OPTIONAL_INT64_SCHEMA)
-  //     .field("arrayField", SchemaBuilder.array(SchemaBuilder.struct()
-  //         .field("hello", Schema.STRING_SCHEMA)
-  //         .field("foo", Schema.STRING_SCHEMA)
-  //         .build()))
-  //     .build();
-  //   final Struct simpleStruct = new Struct(simpleStructSchema)  
-  //     .put("magic", 42L)
-  //     .put("arrayField", new Object[] {
-  //       new Struct(simpleStructSchema.field("arrayField").schema().valueSchema())
-  //         .put("hello", "world"),
-  //       new Struct(simpleStructSchema.field("arrayField").schema().valueSchema())
-  //         .put("foo", "bar")
-  //     });
+    final Schema elementStructSchema = SchemaBuilder.struct()
+        .name("name")
+        .version(1)
+        .doc("doc")
+        .field("foo", Schema.OPTIONAL_STRING_SCHEMA)
+        .optional()
+        .field("bar", Schema.OPTIONAL_STRING_SCHEMA)
+        .optional()
+        .field("baz", Schema.OPTIONAL_STRING_SCHEMA)
+        .optional()
+        .field("qux", Schema.OPTIONAL_STRING_SCHEMA)
+        .optional()
+        .field("quux", Schema.OPTIONAL_STRING_SCHEMA)
+        .optional()
+        .field("corge", Schema.OPTIONAL_STRING_SCHEMA)
+        .optional()
+        .build();
+    
+    final Schema simpleStructSchema = SchemaBuilder.struct()
+        .name("name")
+        .version(1)
+        .doc("doc")
+        .field("arrayField", SchemaBuilder.array(elementStructSchema).optional().build())
+        .build();
+        
+    final Struct m1 = new Struct(elementStructSchema)
+        .put("foo", "Cat")
+        .put("bar", "Cut")
+        .put("baz", "Cot");
+    final Struct m2 = new Struct(elementStructSchema)
+        .put("qux", "Cat")
+        .put("quux", "Cut")
+        .put("corge", "Cot");
+    final Struct m3 = new Struct(elementStructSchema)
+        .put("qux", "Bat")
+        .put("quux", "But")
+        .put("corge", "Bot");
+    List<Struct> arr = new ArrayList<>(Arrays.asList(m1, m2, m3)); 
+    final Struct simpleStruct = new Struct(simpleStructSchema)
+        .put("arrayField", arr);
 
-  //   final SourceRecord record = new SourceRecord(null, null, "test", 0, simpleStructSchema, simpleStruct);
-  //   final SourceRecord transformedRecord = xform.apply(record);
+    final SourceRecord record = new SourceRecord(null, null, "test", 0, simpleStructSchema, simpleStruct);
+    final SourceRecord transformedRecord = xform.apply(record);
 
-  //   assertEquals(simpleStructSchema.name(), transformedRecord.valueSchema().name());
-  //   assertEquals(simpleStructSchema.version(), transformedRecord.valueSchema().version());
-  //   assertEquals(simpleStructSchema.doc(), transformedRecord.valueSchema().doc());
+    assertEquals(simpleStructSchema.name(), transformedRecord.valueSchema().name());
+    assertEquals(simpleStructSchema.version(), transformedRecord.valueSchema().version());
+    assertEquals(simpleStructSchema.doc(), transformedRecord.valueSchema().doc());
 
-  //   assertEquals(Schema.OPTIONAL_INT64_SCHEMA, transformedRecord.valueSchema().field("magic").schema());
-  //   assertEquals(42L, ((Struct) transformedRecord.value()).getInt64("magic").longValue());
-  //   assertEquals(Schema.STRING_SCHEMA, transformedRecord.valueSchema().field("myUuid").schema());
-  //   assertNotNull(((Struct) transformedRecord.value()).getString("myUuid"));
+    // lazy hash, cant use assertEquals
+    assertTrue(
+      SchemaBuilder.array(Schema.OPTIONAL_STRING_SCHEMA).optional().build().equals(
+        transformedRecord.valueSchema().field("arrayField").schema()
+        ));
+    assertEquals(Arrays.asList("foo", "bar"), ((Struct) transformedRecord.value()).get("arrayField"));
+    assertEquals(Schema.OPTIONAL_STRING_SCHEMA, transformedRecord.valueSchema().field("elementValue").schema());
+    assertNotNull(((Struct) transformedRecord.value()).getString("elementValue"));
 
-  //   // Exercise caching
-  //   final SourceRecord transformedRecord2 = xform.apply(
-  //     new SourceRecord(null, null, "test", 1, simpleStructSchema, new Struct(simpleStructSchema)));
-  //   assertSame(transformedRecord.valueSchema(), transformedRecord2.valueSchema());
+    // Exercise caching
+    final SourceRecord transformedRecord2 = xform.apply(
+      new SourceRecord(null, null, "test", 1, simpleStructSchema, new Struct(simpleStructSchema)));
+    assertSame(transformedRecord.valueSchema(), transformedRecord2.valueSchema());
 
-  // }
+  }
+
+
+  @Test
+  public void copySchemaAndFindExpectedElement() {
+    final Map<String, Object> props = new HashMap<>();
+
+    props.put("array.field.name", "arrayField");
+    props.put("path.value", "bar");
+    props.put("uuid.field.name", "elementValue");
+
+    xform.configure(props);
+
+    final Schema simpleStructSchema = SchemaBuilder.struct()
+        .name("name")
+        .version(1)
+        .doc("doc")
+        .field("arrayField", SchemaBuilder.array(Schema.OPTIONAL_STRING_SCHEMA).optional().build())
+        .build();
+        
+    final Struct simpleStruct = new Struct(simpleStructSchema)
+        .put("arrayField", Arrays.asList("foo", "bar"));
+
+    final SourceRecord record = new SourceRecord(null, null, "test", 0, simpleStructSchema, simpleStruct);
+    final SourceRecord transformedRecord = xform.apply(record);
+
+    assertEquals(simpleStructSchema.name(), transformedRecord.valueSchema().name());
+    assertEquals(simpleStructSchema.version(), transformedRecord.valueSchema().version());
+    assertEquals(simpleStructSchema.doc(), transformedRecord.valueSchema().doc());
+
+    // lazy hash, cant use assertEquals
+    assertTrue(
+      SchemaBuilder.array(Schema.OPTIONAL_STRING_SCHEMA).optional().build().equals(
+        transformedRecord.valueSchema().field("arrayField").schema()
+        ));
+    assertEquals(Arrays.asList("foo", "bar"), ((Struct) transformedRecord.value()).get("arrayField"));
+    assertEquals(Schema.OPTIONAL_STRING_SCHEMA, transformedRecord.valueSchema().field("elementValue").schema());
+    assertNotNull(((Struct) transformedRecord.value()).getString("elementValue"));
+
+    // Exercise caching
+    final SourceRecord transformedRecord2 = xform.apply(
+      new SourceRecord(null, null, "test", 1, simpleStructSchema, new Struct(simpleStructSchema)));
+    assertSame(transformedRecord.valueSchema(), transformedRecord2.valueSchema());
+
+  }
 
   @Test
   public void schemalessFindExpectedValuePath() {

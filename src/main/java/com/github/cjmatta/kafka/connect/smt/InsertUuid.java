@@ -16,6 +16,7 @@
 
 package com.github.cjmatta.kafka.connect.smt;
 
+import io.confluent.connect.storage.util.DataUtils;
 import org.apache.kafka.common.cache.Cache;
 import org.apache.kafka.common.cache.LRUCache;
 import org.apache.kafka.common.cache.SynchronizedCache;
@@ -26,7 +27,7 @@ import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
-
+import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.transforms.Transformation;
 import org.apache.kafka.connect.transforms.util.SchemaUtil;
 import org.apache.kafka.connect.transforms.util.SimpleConfig;
@@ -34,6 +35,8 @@ import org.apache.kafka.connect.transforms.util.SimpleConfig;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -118,35 +121,101 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
     }
   }
 
+  public static Object getField(Object structOrMap, String fieldName) {
+    // validate(structOrMap, fieldName);
+
+    Object field;
+    if (structOrMap instanceof Struct) {
+      field = ((Struct) structOrMap).get(fieldName);
+    } else if (structOrMap instanceof Map) {
+      field = ((Map<?, ?>) structOrMap).get(fieldName);
+      if (field == null) {
+        throw new DataException(String.format("Unable to find nested field '%s'", fieldName));
+      }
+      return field;
+    } else {
+      throw new DataException(String.format(
+            "Argument not a Struct or Map. Cannot get field '%s'.",
+            fieldName
+      ));
+    }
+    // if (field == null) {
+    //   throw new DataException(
+    //         String.format("The field '%s' does not exist.", fieldName));
+    // }
+    return field;
+  }
+  
+  public static Object getNestedFieldValue(Object structOrMap, String fieldName) {
+    // validate(structOrMap, fieldName);
+
+    try {
+      Object innermost = structOrMap;
+      // Iterate down to final struct
+      for (String name : fieldName.split("\\.")) {
+        innermost = getField(innermost, name);
+      }
+      return innermost;
+    } catch (DataException e) {
+      return null;
+      // throw new DataException(
+      //       String.format("The field '%s' does not exist.", fieldName),
+      //       e
+      // );
+    }
+  }
+
+  public static Field getNestedField(Schema schema, String fieldName) {
+    // validate(schema, fieldName);
+
+    final String[] fieldNames = fieldName.split("\\.");
+    try {
+      Field innermost = schema.field(fieldNames[0]);
+      // Iterate down to final schema
+      for (int i = 1; i < fieldNames.length; ++i) {
+        innermost = innermost.schema().field(fieldNames[i]);
+      }
+      return innermost;
+    } catch (DataException e) {
+      return null;
+      // throw new DataException(
+      //       String.format("Unable to get field '%s' from schema %s.", fieldName, schema),
+      //       e
+      // );
+    }
+  }
+  
   private R applySchemaless(R record) {
     final Map<String, Object> value = requireMap(operatingValue(record), PURPOSE);
 
     final Map<String, Object> updatedValue = new HashMap<>(value);
+    
     final Object fieldValue = updatedValue.get(arrayFieldName);
     final Object[] arr = (fieldValue instanceof Object[])? (Object[]) fieldValue : null;
     final String[] tokens = (elementFieldAccessor.isPresent()) ? elementFieldAccessor.get().split("\\.") : new String[0];
     Object element = null;
-    
-    for (Object obj : arr) {
-      Object val = obj;
+    // DataUtils.getNestedFieldValue ?
+    for (Object el : arr) {
+      Object elValue = el;
       boolean found = true;
+
       for (String token : tokens) {
-        if (!(val instanceof Map) || !((Map<?, ?>) val).containsKey(token)) {
+        if (!(elValue instanceof Map) || !((Map<?, ?>) elValue).containsKey(token)) {
           found = false;
           break;
         }
-        val = ((Map<?, ?>) val).get(token);
+        elValue = ((Map<?, ?>) elValue).get(token);
       }
       
-      if (found && val instanceof String) {
+      if (found && elValue instanceof String) {
         if (fieldExpectedValue.isPresent()) {
-            if (((String) val).equals(fieldExpectedValue.get())) {
-              element = obj;
+            if (((String) elValue).equals(fieldExpectedValue.get())) {
+              element = el;
               break;
             }
           } else {
-            if (((String) val).matches(fieldValuePattern.get())) {
-              element = obj;
+            if (((String) elValue).matches(fieldValuePattern.get())) {
+              element = el;
               break;
           }
         }
@@ -174,7 +243,35 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
       updatedValue.put(field.name(), value.get(field));
     }
 
-    updatedValue.put(fieldName, getRandomUuid());
+    final List<?> fieldValue = updatedValue.get(arrayFieldName) != null ? (List<?>) updatedValue.get(arrayFieldName) : Arrays.asList();
+    List<?> arr = fieldValue;
+    // final String[] tokens = (elementFieldAccessor.isPresent()) ? elementFieldAccessor.get().split("\\.") : new String[0];
+    Object element = null;
+    for ( Object el : arr) {
+      boolean found = true;
+      Object elPathValue = el;
+
+      if (elementFieldAccessor.isPresent()){
+        String accessor = elementFieldAccessor.get();
+        elPathValue = getNestedFieldValue(el, accessor);
+        found = elPathValue != null;
+      }
+
+      if (found && elPathValue instanceof String) {
+        if (fieldExpectedValue.isPresent()) {
+            if (((String) elPathValue).equals(fieldExpectedValue.get())) {
+              element = el;
+              break;
+            }
+          } else {
+            if (((String) elPathValue).matches(fieldValuePattern.get())) {
+              element = el;
+              break;
+          }
+        }
+      }
+    }
+    updatedValue.put(fieldName, element);
 
     return newRecord(record, updatedSchema, updatedValue);
   }
@@ -199,8 +296,9 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
     for (Field field: schema.fields()) {
       builder.field(field.name(), field.schema());
     }
-
-    builder.field(fieldName, Schema.STRING_SCHEMA);
+    
+    Schema elementSchema = SchemaBuilder.type(builder.field(arrayFieldName).schema().valueSchema().type()).optional().build();
+    builder.field(fieldName, elementSchema);
 
     return builder.build();
   }
