@@ -114,12 +114,12 @@ public class InsertUuidTest {
 
     // lazy hash, cant use assertEquals
     assertTrue(
-      SchemaBuilder.array(Schema.OPTIONAL_STRING_SCHEMA).optional().build().equals(
+      SchemaBuilder.array(elementStructSchema).optional().build().equals(
         transformedRecord.valueSchema().field("arrayField").schema()
         ));
-    assertEquals(Arrays.asList("foo", "bar"), ((Struct) transformedRecord.value()).get("arrayField"));
-    assertEquals(Schema.OPTIONAL_STRING_SCHEMA, transformedRecord.valueSchema().field("elementValue").schema());
-    assertNotNull(((Struct) transformedRecord.value()).getString("elementValue"));
+    assertEquals(arr, ((Struct) transformedRecord.value()).get("arrayField"));
+    assertEquals(elementStructSchema, transformedRecord.valueSchema().field("elementValue").schema());
+    assertNotNull(((Struct) transformedRecord.value()).get("elementValue").toString());
 
     // Exercise caching
     final SourceRecord transformedRecord2 = xform.apply(

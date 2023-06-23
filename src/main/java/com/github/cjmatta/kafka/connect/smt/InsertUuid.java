@@ -296,8 +296,9 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
     for (Field field: schema.fields()) {
       builder.field(field.name(), field.schema());
     }
-    
-    Schema elementSchema = SchemaBuilder.type(builder.field(arrayFieldName).schema().valueSchema().type()).optional().build();
+    // Schema{ARRAY}}
+    // Schema{name:STRUCT}
+    Schema elementSchema = builder.field(arrayFieldName).schema().valueSchema();
     builder.field(fieldName, elementSchema);
 
     return builder.build();
