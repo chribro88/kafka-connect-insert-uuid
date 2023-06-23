@@ -244,7 +244,8 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
     }
 
     // final List<?> fieldValue = updatedValue.get(arrayFieldName) != null  ? (List<?>) updatedValue.get(arrayFieldName) : Arrays.asList();
-    final List<?> fieldValue = updatedValue.schema().field(arrayFieldName) != null ? (List<?>) updatedValue.get(arrayFieldName) : Arrays.asList();
+    boolean fieldAndValueExists = (updatedValue.schema().field(arrayFieldName) != null && updatedValue.get(arrayFieldName) != null);
+    final List<?> fieldValue = fieldAndValueExists ? (List<?>) updatedValue.get(arrayFieldName) : (List<?>) Arrays.asList();
     List<?> arr = fieldValue;
     // final String[] tokens = (elementFieldAccessor.isPresent()) ? elementFieldAccessor.get().split("\\.") : new String[0];
     Object element = null;

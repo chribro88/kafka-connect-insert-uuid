@@ -145,9 +145,9 @@ public class InsertUuidTest {
         .doc("doc")
         .field("arrayField", SchemaBuilder.array(Schema.OPTIONAL_STRING_SCHEMA).optional().build())
         .build();
-        
+    final List<String> arr = Arrays.asList("foo", "bar");    
     final Struct simpleStruct = new Struct(simpleStructSchema)
-        .put("arrayField", Arrays.asList("foo", "bar"));
+        .put("arrayField", arr);
 
     final SourceRecord record = new SourceRecord(null, null, "test", 0, simpleStructSchema, simpleStruct);
     final SourceRecord transformedRecord = xform.apply(record);
@@ -161,7 +161,7 @@ public class InsertUuidTest {
       SchemaBuilder.array(Schema.OPTIONAL_STRING_SCHEMA).optional().build().equals(
         transformedRecord.valueSchema().field("arrayField").schema()
         ));
-    assertEquals(Arrays.asList("foo", "bar"), ((Struct) transformedRecord.value()).get("arrayField"));
+    assertEquals(arr, ((Struct) transformedRecord.value()).get("arrayField"));
     assertEquals(Schema.OPTIONAL_STRING_SCHEMA, transformedRecord.valueSchema().field("elementValue").schema());
     assertNotNull(((Struct) transformedRecord.value()).getString("elementValue"));
 
