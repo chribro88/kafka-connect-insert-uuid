@@ -292,13 +292,22 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
 
   private Schema makeUpdatedSchema(Schema schema) {
     final SchemaBuilder builder = SchemaUtil.copySchemaBasics(schema, SchemaBuilder.struct());
+    Schema elementSchema = Schema.OPTIONAL_STRING_SCHEMA;
 
     for (Field field: schema.fields()) {
       builder.field(field.name(), field.schema());
     }
-    // Schema{ARRAY}}
-    // Schema{name:STRUCT}
-    Schema elementSchema = builder.field(arrayFieldName).schema().valueSchema();
+    try {
+      // Schema{ARRAY}}
+      // Schema{name:STRUCT}
+      elementSchema = builder.field(arrayFieldName).schema().valueSchema();
+    } catch (NullPointerException e) {
+        throw new DataException(
+              String.format("Unable to get field '%s' from schema %s.", arrayFieldName, schema),
+              e
+        );
+    }
+    
     builder.field(fieldName, elementSchema);
 
     return builder.build();
