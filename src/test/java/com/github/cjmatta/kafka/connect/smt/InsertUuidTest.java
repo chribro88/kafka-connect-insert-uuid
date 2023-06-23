@@ -278,5 +278,44 @@ public class InsertUuidTest {
     assertEquals("bar", ((Map) transformedRecord.value()).get("elementValue"));    
   }
 
+  @Test
+  public void copySchemaAndNullPointer() {
+    final Map<String, Object> props = new HashMap<>();
+
+    props.put("array.field.name", "nonExistentField");
+    props.put("path.value", "bar");
+    props.put("uuid.field.name", "elementValue");
+
+    xform.configure(props);
+
+    final Schema simpleStructSchema = SchemaBuilder.struct()
+        .name("name")
+        .version(1)
+        .doc("doc")
+        .field("arrayField", SchemaBuilder.array(Schema.OPTIONAL_STRING_SCHEMA).optional().build())
+        .build();
+    
+    final Struct simpleStruct = new Struct(simpleStructSchema)
+        .put("arrayField", Arrays.asList("foo", "bar"));
+
+    final SourceRecord record = new SourceRecord(null, null, "test", 0, simpleStructSchema, simpleStruct);
+    final SourceRecord transformedRecord = xform.apply(record);
+
+    assertEquals(simpleStructSchema.name(), transformedRecord.valueSchema().name());
+    assertEquals(simpleStructSchema.version(), transformedRecord.valueSchema().version());
+    assertEquals(simpleStructSchema.doc(), transformedRecord.valueSchema().doc());
+
+    // lazy hash, cant use assertEquals
+    assertTrue(null == transformedRecord.valueSchema().field("nonExistentField"));
+    // assertEquals(Arrays.asList("foo", "bar"), ((Struct) transformedRecord.value()).get("nonExistentField"));
+    assertEquals(Schema.OPTIONAL_STRING_SCHEMA, transformedRecord.valueSchema().field("elementValue").schema());
+    assertNull(((Struct) transformedRecord.value()).getString("elementValue"));
+
+    // Exercise caching
+    final SourceRecord transformedRecord2 = xform.apply(
+      new SourceRecord(null, null, "test", 1, simpleStructSchema, new Struct(simpleStructSchema)));
+    assertSame(transformedRecord.valueSchema(), transformedRecord2.valueSchema());
+  }
+
 }
 

@@ -243,7 +243,8 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
       updatedValue.put(field.name(), value.get(field));
     }
 
-    final List<?> fieldValue = updatedValue.get(arrayFieldName) != null ? (List<?>) updatedValue.get(arrayFieldName) : Arrays.asList();
+    // final List<?> fieldValue = updatedValue.get(arrayFieldName) != null  ? (List<?>) updatedValue.get(arrayFieldName) : Arrays.asList();
+    final List<?> fieldValue = updatedValue.schema().field(arrayFieldName) != null ? (List<?>) updatedValue.get(arrayFieldName) : Arrays.asList();
     List<?> arr = fieldValue;
     // final String[] tokens = (elementFieldAccessor.isPresent()) ? elementFieldAccessor.get().split("\\.") : new String[0];
     Object element = null;
@@ -302,10 +303,10 @@ public abstract class InsertUuid<R extends ConnectRecord<R>> implements Transfor
       // Schema{name:STRUCT}
       elementSchema = builder.field(arrayFieldName).schema().valueSchema();
     } catch (NullPointerException e) {
-        throw new DataException(
-              String.format("Unable to get field '%s' from schema %s.", arrayFieldName, schema),
-              e
-        );
+        // throw new DataException(
+        //       String.format("Unable to get field '%s' from schema %s.", arrayFieldName, schema),
+        //       e
+        // );
     }
     
     builder.field(fieldName, elementSchema);
