@@ -159,47 +159,28 @@ public abstract class HeaderFrom<R extends ConnectRecord<R>> implements Transfor
     }
 
     private R applyWithSchema(R record, Object operatingValue, Schema operatingSchema) {
-        System.out.println("**SCHEMA**");
-        System.out.println(operatingSchema.toString());
-        System.out.println("**STRUCT**");
-        System.out.println(operatingValue.toString());
-        Headers updatedHeaders = record.headers().duplicate();
-        Struct value = Requirements.requireStruct(operatingValue, "header " + operation);
-        final Schema updatedSchema;
-        final Struct updatedValue;
-        if (operation == Operation.MOVE) {
-            updatedSchema = moveSchema(operatingSchema);
-            updatedValue = fieldPaths.updateValuesFrom(operatingSchema, value, updatedSchema,
-                (oldValue, oldField, updated, updatedField, fieldPath) -> {
-                    // ignore value
-                });
-        } else {
-            updatedSchema = operatingSchema;
-            updatedValue = value;
+        if (!(operatingValue instanceof byte[])) {
+            throw new UnsupportedOperationException(String.format("Output format is type %s. Please set \"output.format.key/value\": \"bson\"", operatingValue.getClass().getName()));
         }
-
-        Map<SingleFieldPath, Map.Entry<Field, Object>> fieldAndValues = fieldPaths.fieldAndValuesFrom(value);
+        Document operatingDocument = BsonToBinary.toDocument((byte[]) operatingValue);
+        Headers updatedHeaders = record.headers().duplicate();
+        Map<String, Object> value = Requirements.requireMap(operatingDocument, "header " + operation);
+        Map<String, Object> updatedValue = new LinkedHashMap<>(value);
+        Map<SingleFieldPath, Map.Entry<String, Object>> values = fieldPaths.fieldAndValuesFrom(value);
+        if (operation == Operation.MOVE) {
+            updatedValue = fieldPaths.updateValuesFrom(
+                    updatedValue,
+                    (original, map, fieldPath, fieldName) -> map.remove(fieldName)
+            );
+        }
         for (Map.Entry<String, List<SingleFieldPath>> entry : headersMap.entrySet()) {
             // headers may point to many values, though it's usually close to 1
             for (SingleFieldPath fieldPath : entry.getValue()) {
-                Map.Entry<Field, Object> fieldAndValue = fieldAndValues.get(fieldPath);
-                if (fieldAndValue != null) {
-                    updatedHeaders.add(entry.getKey(), fieldAndValue.getValue(), fieldAndValue.getKey().schema());
-                }
+                final Map.Entry<String, Object> fieldAndValue = values.get(fieldPath);
+                updatedHeaders.add(entry.getKey(), fieldAndValue != null ? fieldAndValue.getValue() : null, null);
             }
         }
-        return newRecord(record, updatedSchema, updatedValue, updatedHeaders);
-    }
-
-    private Schema moveSchema(Schema operatingSchema) {
-        Schema moveSchema = this.moveSchemaCache.get(operatingSchema);
-        if (moveSchema == null) {
-            moveSchema = fieldPaths.updateSchemaFrom(operatingSchema, (builder, field, fieldPath) -> {
-                // ignore field
-            });
-            moveSchemaCache.put(operatingSchema, moveSchema);
-        }
-        return moveSchema;
+        return newRecord(record, operatingSchema, updatedValue, updatedHeaders);
     }
 
     private R applySchemaless(R record, Object operatingValue) {
