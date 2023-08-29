@@ -5,8 +5,8 @@ com/github/chribro88/kafka/connect/smt/HeaderFromBson$Operation.class
 com/github/chribro88/kafka/connect/smt/field/FieldSyntaxVersion.class
 com/github/chribro88/kafka/connect/smt/ExtendedConfigDef.class
 com/github/chribro88/kafka/connect/smt/field/SingleFieldPath.class
-com/github/chribro88/kafka/connect/smt/field/StructValueUpdater.class
 com/github/chribro88/kafka/connect/smt/field/StructSchemaUpdater.class
+com/github/chribro88/kafka/connect/smt/field/StructValueUpdater.class
 com/github/chribro88/kafka/connect/smt/HeaderFromBson$Key.class
 com/github/chribro88/kafka/connect/smt/HeaderFromBson$Value.class
 com/github/chribro88/kafka/connect/smt/BsonToBinary.class
