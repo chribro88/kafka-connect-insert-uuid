@@ -183,7 +183,7 @@ public abstract class HeaderFromBson<R extends ConnectRecord<R>> implements Tran
                 updatedHeaders.add(entry.getKey(), fieldAndValue != null ? fieldAndValue.getValue() : null, null);
             }
         }
-        return newRecord(record, operatingSchema, updatedValue, updatedHeaders);
+        return newRecord(record, operatingSchema, BsonToBinary.toBytes(new Document(updatedValue)), updatedHeaders);
     }
 
     private R applySchemaless(R record, Object operatingValue) {
