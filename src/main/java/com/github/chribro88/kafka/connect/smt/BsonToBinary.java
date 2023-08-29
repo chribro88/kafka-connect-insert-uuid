@@ -1,4 +1,4 @@
-package com.github.cjmatta.kafka.connect.smt;
+package com.github.chribro88.kafka.connect.smt;
 
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;

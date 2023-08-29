@@ -1,4 +1,4 @@
-package com.github.cjmatta.kafka.connect.smt;
+package com.github.chribro88.kafka.connect.smt;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -17,6 +17,7 @@ package com.github.cjmatta.kafka.connect.smt;
  * limitations under the License.
  */
 
+
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.connector.ConnectRecord;
@@ -24,13 +25,23 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.header.Header;
 import org.apache.kafka.connect.header.Headers;
 import org.apache.kafka.connect.transforms.Transformation;
+// import org.apache.kafka.connect.transforms.field.SingleFieldPath;
+// import org.apache.kafka.connect.transforms.field.MultiFieldPaths;
+// import org.apache.kafka.connect.transforms.field.FieldSyntaxVersion;
 import org.apache.kafka.connect.transforms.util.NonEmptyListValidator;
 import org.apache.kafka.connect.transforms.util.Requirements;
 import org.apache.kafka.connect.transforms.util.SimpleConfig;
-import org.bson.Document;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.bson.Document;
+
+import com.github.chribro88.kafka.connect.smt.field.FieldSyntaxVersion;
+import com.github.chribro88.kafka.connect.smt.field.MultiFieldPaths;
+import com.github.chribro88.kafka.connect.smt.field.SingleFieldPath;
 
 import static java.lang.String.format;
 import static org.apache.kafka.common.config.ConfigDef.NO_DEFAULT_VALUE;
@@ -51,7 +62,8 @@ public abstract class HeaderFrom<R extends ConnectRecord<R>> implements Transfor
                     "Use the concrete transformation type designed for the record " +
                     "key (<code>" + Key.class.getName() + "</code>) or value (<code>" + Value.class.getName() + "</code>).";
 
-    public static final ConfigDef CONFIG_DEF = new ConfigDef()
+    public static final ConfigDef CONFIG_DEF = new ExtendedConfigDef()
+        .addDefinition(FieldSyntaxVersion.configDef())
             .define(FIELDS_FIELD, ConfigDef.Type.LIST,
                     NO_DEFAULT_VALUE, new NonEmptyListValidator(),
                     ConfigDef.Importance.HIGH,
@@ -91,12 +103,39 @@ public abstract class HeaderFrom<R extends ConnectRecord<R>> implements Transfor
         }
     }
 
-    private List<String> fields;
+    private MultiFieldPaths fieldPaths;
 
-    private List<String> headers;
+    private Map<String, List<SingleFieldPath>> headersMap;
 
     private Operation operation;
 
+    @Override
+    public void configure(Map<String, ?> props) {
+        final SimpleConfig config = new SimpleConfig(CONFIG_DEF, props);
+        FieldSyntaxVersion syntaxVersion = FieldSyntaxVersion.fromConfig(config);
+        List<String> fields = config.getList(FIELDS_FIELD);
+        fieldPaths = MultiFieldPaths.of(fields, syntaxVersion);
+        List<String> headers = config.getList(HEADERS_FIELD);
+        if (headers.size() != fields.size()) {
+            throw new ConfigException(format("'%s' config must have the same number of elements as '%s' config.",
+                FIELDS_FIELD, HEADERS_FIELD));
+        }
+        headersMap = new HashMap<>(headers.size());
+        for (int i = 0; i < headers.size(); i++) {
+            final String headerName = headers.get(i);
+            final SingleFieldPath field = new SingleFieldPath(fields.get(i), syntaxVersion);
+            headersMap.computeIfPresent(headerName, (s, p) -> {
+                p.add(field);
+                return p;
+            });
+            headersMap.computeIfAbsent(headerName, s -> {
+                List<SingleFieldPath> paths = new ArrayList<>();
+                paths.add(field);
+                return paths;
+            });
+        }
+        operation = Operation.fromName(config.getString(OPERATION_FIELD));
+    }
 
     @Override
     public R apply(R record) {
@@ -121,17 +160,22 @@ public abstract class HeaderFrom<R extends ConnectRecord<R>> implements Transfor
         Document operatingDocument = BsonToBinary.toDocument((byte[]) operatingValue);
         Headers updatedHeaders = record.headers().duplicate();
         Map<String, Object> value = Requirements.requireMap(operatingDocument, "header " + operation);
-        Document updatedValue = new Document(value);
-        for (int i = 0; i < fields.size(); i++) {
-            String fieldName = fields.get(i);
-            Object fieldValue = value.get(fieldName);
-            String headerName = headers.get(i);
-            if (operation == Operation.MOVE) {
-                updatedValue.remove(fieldName);
-            }
-            updatedHeaders.add(headerName, fieldValue, null);
+        Map<String, Object> updatedValue = new LinkedHashMap<>(value);
+        Map<SingleFieldPath, Map.Entry<String, Object>> values = fieldPaths.fieldAndValuesFrom(value);
+        if (operation == Operation.MOVE) {
+            updatedValue = fieldPaths.updateValuesFrom(
+                    updatedValue,
+                    (original, map, fieldPath, fieldName) -> map.remove(fieldName)
+            );
         }
-        return newRecord(record, null, BsonToBinary.toBytes(updatedValue), updatedHeaders);
+        for (Map.Entry<String, List<SingleFieldPath>> entry : headersMap.entrySet()) {
+            // headers may point to many values, though it's usually close to 1
+            for (SingleFieldPath fieldPath : entry.getValue()) {
+                final Map.Entry<String, Object> fieldAndValue = values.get(fieldPath);
+                updatedHeaders.add(entry.getKey(), fieldAndValue != null ? fieldAndValue.getValue() : null, null);
+            }
+        }
+        return newRecord(record, null, BsonToBinary.toBytes(new Document(updatedValue)), updatedHeaders);
     }
 
     protected abstract Object operatingValue(R record);
@@ -186,15 +230,4 @@ public abstract class HeaderFrom<R extends ConnectRecord<R>> implements Transfor
 
     }
 
-    @Override
-    public void configure(Map<String, ?> props) {
-        final SimpleConfig config = new SimpleConfig(CONFIG_DEF, props);
-        fields = config.getList(FIELDS_FIELD);
-        headers = config.getList(HEADERS_FIELD);
-        if (headers.size() != fields.size()) {
-            throw new ConfigException(format("'%s' config must have the same number of elements as '%s' config.",
-                    FIELDS_FIELD, HEADERS_FIELD));
-        }
-        operation = Operation.fromName(config.getString(OPERATION_FIELD));
-    }
 }
