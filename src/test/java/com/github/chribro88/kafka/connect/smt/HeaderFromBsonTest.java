@@ -33,7 +33,7 @@ import static org.apache.kafka.connect.data.Schema.STRING_SCHEMA;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class HeaderFromTest {
+public class HeaderFromBsonTest {
 
     static class RecordBuilder {
         private final List<String> fields = new ArrayList<>(2);
@@ -138,7 +138,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.COPY,
+                            HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -154,7 +154,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -170,7 +170,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.COPY,
+                            HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -186,7 +186,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -203,7 +203,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.COPY,
+                            HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", null, struct)
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -219,7 +219,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -236,7 +236,7 @@ public class HeaderFromTest {
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
                             asList("field1", "field1"), asList("inserted1", "inserted2"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -254,7 +254,7 @@ public class HeaderFromTest {
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
                             asList("field1", "field2"), asList("inserted1", "inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 and field2 got moved
                                     .addHeader("header1", STRING_SCHEMA, "existing-value")
@@ -279,7 +279,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.COPY,
+                            HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -295,7 +295,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -311,7 +311,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.COPY,
+                            HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -327,7 +327,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -345,7 +345,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.COPY,
+                            HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", schema, struct)
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -361,7 +361,7 @@ public class HeaderFromTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("field1"), singletonList("inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -378,7 +378,7 @@ public class HeaderFromTest {
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
                             asList("field1", "field1"), asList("inserted1", "inserted2"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -396,7 +396,7 @@ public class HeaderFromTest {
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
                             asList("field1", "field2"), asList("inserted1", "inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 and field2 got moved
                                     .addHeader("header1", STRING_SCHEMA, "existing-value")
@@ -428,7 +428,7 @@ public class HeaderFromTest {
                                     .withField("foo", null, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("foo.bar"), singletonList("inserted1"),
-                            HeaderFrom.Operation.COPY,
+                            HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -446,7 +446,7 @@ public class HeaderFromTest {
                                     .withField("foo", null, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("foo.bar"), singletonList("inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -465,7 +465,7 @@ public class HeaderFromTest {
                                     .withField("foo", null, foo)
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
                             singletonList("foo.bar"), singletonList("inserted1"),
-                            HeaderFrom.Operation.COPY,
+                            HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -483,7 +483,7 @@ public class HeaderFromTest {
                                     .withField("foo", null, foo)
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
                             singletonList("foo.bar"), singletonList("inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -503,7 +503,7 @@ public class HeaderFromTest {
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
                             asList("foo.bar", "foo.bar"), asList("inserted1", "inserted2"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -524,7 +524,7 @@ public class HeaderFromTest {
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
                             asList("foo.bar", "foo.baz"), asList("inserted1", "inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -568,7 +568,7 @@ public class HeaderFromTest {
                                     .withField("foo", fooSchema, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("foo.bar"), singletonList("inserted1"),
-                            HeaderFrom.Operation.COPY,
+                            HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -586,7 +586,7 @@ public class HeaderFromTest {
                                     .withField("foo", fooSchema, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             singletonList("foo.bar"), singletonList("inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -605,7 +605,7 @@ public class HeaderFromTest {
                                     .withField("foo", fooSchema, foo)
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
                             singletonList("foo.bar"), singletonList("inserted1"),
-                            HeaderFrom.Operation.COPY,
+                            HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -623,7 +623,7 @@ public class HeaderFromTest {
                                     .withField("foo", fooSchema, foo)
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
                             singletonList("foo.bar"), singletonList("inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -643,7 +643,7 @@ public class HeaderFromTest {
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
                             asList("foo.bar", "foo.bar"), asList("inserted1", "inserted2"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -664,7 +664,7 @@ public class HeaderFromTest {
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
                             asList("foo.bar", "foo.baz"), asList("inserted1", "inserted1"),
-                            HeaderFrom.Operation.MOVE,
+                            HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
@@ -680,16 +680,16 @@ public class HeaderFromTest {
     }
 
     private Map<String, Object> config(List<String> headers, List<String> transformFields,
-            HeaderFrom.Operation operation) {
+            HeaderFromBson.Operation operation) {
         return config(headers, transformFields, operation, FieldSyntaxVersion.V1);
     }
 
     private Map<String, Object> config(List<String> headers, List<String> transformFields,
-            HeaderFrom.Operation operation, FieldSyntaxVersion version) {
+            HeaderFromBson.Operation operation, FieldSyntaxVersion version) {
         Map<String, Object> result = new HashMap<>();
-        result.put(HeaderFrom.HEADERS_FIELD, headers);
-        result.put(HeaderFrom.FIELDS_FIELD, transformFields);
-        result.put(HeaderFrom.OPERATION_FIELD, operation.toString());
+        result.put(HeaderFromBson.HEADERS_FIELD, headers);
+        result.put(HeaderFromBson.FIELDS_FIELD, transformFields);
+        result.put(HeaderFromBson.OPERATION_FIELD, operation.toString());
         result.put(FieldSyntaxVersion.FIELD_SYNTAX_VERSION_CONFIG, version.name());
         return result;
     }
@@ -700,11 +700,11 @@ public class HeaderFromTest {
             String description,
             boolean keyTransform,
             RecordBuilder originalBuilder,
-            List<String> transformFields, List<String> headers1, HeaderFrom.Operation operation,
+            List<String> transformFields, List<String> headers1, HeaderFromBson.Operation operation,
             RecordBuilder expectedBuilder
     ) {
-        HeaderFrom<SourceRecord> xform =
-                keyTransform ? new HeaderFrom.Key<>() : new HeaderFrom.Value<>();
+        HeaderFromBson<SourceRecord> xform =
+                keyTransform ? new HeaderFromBson.Key<>() : new HeaderFromBson.Value<>();
 
         xform.configure(config(headers1, transformFields, operation));
         ConnectHeaders headers = new ConnectHeaders();
@@ -723,11 +723,11 @@ public class HeaderFromTest {
             String description,
             boolean keyTransform,
             RecordBuilder originalBuilder,
-            List<String> transformFields, List<String> headers1, HeaderFrom.Operation operation,
+            List<String> transformFields, List<String> headers1, HeaderFromBson.Operation operation,
             RecordBuilder expectedBuilder
     ) {
-        HeaderFrom<SourceRecord> xform =
-                keyTransform ? new HeaderFrom.Key<>() : new HeaderFrom.Value<>();
+        HeaderFromBson<SourceRecord> xform =
+                keyTransform ? new HeaderFromBson.Key<>() : new HeaderFromBson.Value<>();
 
         xform.configure(config(headers1, transformFields, operation, FieldSyntaxVersion.V2));
         ConnectHeaders headers = new ConnectHeaders();
@@ -742,24 +742,24 @@ public class HeaderFromTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void invalidConfigExtraHeaderConfig(boolean keyTransform) {
-        Map<String, Object> config = config(singletonList("foo"), asList("foo", "bar"), HeaderFrom.Operation.COPY);
-        HeaderFrom<?> xform = keyTransform ? new HeaderFrom.Key<>() : new HeaderFrom.Value<>();
+        Map<String, Object> config = config(singletonList("foo"), asList("foo", "bar"), HeaderFromBson.Operation.COPY);
+        HeaderFromBson<?> xform = keyTransform ? new HeaderFromBson.Key<>() : new HeaderFromBson.Value<>();
         assertThrows(ConfigException.class, () -> xform.configure(config));
     }
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void invalidConfigExtraFieldConfig(boolean keyTransform) {
-        Map<String, Object> config = config(asList("foo", "bar"), singletonList("foo"), HeaderFrom.Operation.COPY);
-        HeaderFrom<?> xform = keyTransform ? new HeaderFrom.Key<>() : new HeaderFrom.Value<>();
+        Map<String, Object> config = config(asList("foo", "bar"), singletonList("foo"), HeaderFromBson.Operation.COPY);
+        HeaderFromBson<?> xform = keyTransform ? new HeaderFromBson.Key<>() : new HeaderFromBson.Value<>();
         assertThrows(ConfigException.class, () -> xform.configure(config));
     }
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void invalidConfigEmptyHeadersAndFieldsConfig(boolean keyTransform) {
-        Map<String, Object> config = config(emptyList(), emptyList(), HeaderFrom.Operation.COPY);
-        HeaderFrom<?> xform = keyTransform ? new HeaderFrom.Key<>() : new HeaderFrom.Value<>();
+        Map<String, Object> config = config(emptyList(), emptyList(), HeaderFromBson.Operation.COPY);
+        HeaderFromBson<?> xform = keyTransform ? new HeaderFromBson.Key<>() : new HeaderFromBson.Value<>();
         assertThrows(ConfigException.class, () -> xform.configure(config));
     }
 

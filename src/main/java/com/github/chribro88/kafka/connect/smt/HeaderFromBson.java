@@ -54,7 +54,7 @@ import com.github.chribro88.kafka.connect.smt.field.SingleFieldPath;
 import static java.lang.String.format;
 import static org.apache.kafka.common.config.ConfigDef.NO_DEFAULT_VALUE;
 
-public abstract class HeaderFrom<R extends ConnectRecord<R>> implements Transformation<R> {
+public abstract class HeaderFromBson<R extends ConnectRecord<R>> implements Transformation<R> {
 
     public static final String FIELDS_FIELD = "fields";
     public static final String HEADERS_FIELD = "headers";
@@ -215,7 +215,7 @@ public abstract class HeaderFrom<R extends ConnectRecord<R>> implements Transfor
     protected abstract Schema operatingSchema(R record);
     protected abstract R newRecord(R record, Schema updatedSchema, Object updatedValue, Iterable<Header> updatedHeaders);
 
-    public static class Key<R extends ConnectRecord<R>> extends HeaderFrom<R> {
+    public static class Key<R extends ConnectRecord<R>> extends HeaderFromBson<R> {
 
         @Override
         public Object operatingValue(R record) {
@@ -234,7 +234,7 @@ public abstract class HeaderFrom<R extends ConnectRecord<R>> implements Transfor
         }
     }
 
-    public static class Value<R extends ConnectRecord<R>> extends HeaderFrom<R> {
+    public static class Value<R extends ConnectRecord<R>> extends HeaderFromBson<R> {
 
         @Override
         public Object operatingValue(R record) {
