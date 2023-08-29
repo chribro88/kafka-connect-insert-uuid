@@ -162,6 +162,7 @@ public abstract class HeaderFrom<R extends ConnectRecord<R>> implements Transfor
         if (!(operatingValue instanceof byte[])) {
             throw new UnsupportedOperationException(String.format("Output format is type %s. Please set \"output.format.key/value\": \"bson\"", operatingValue.getClass().getName()));
         }
+        System.out.println("PRINT " + new String((byte[]) operatingValue));
         Document operatingDocument = BsonToBinary.toDocument((byte[]) operatingValue);
         Headers updatedHeaders = record.headers().duplicate();
         Map<String, Object> value = Requirements.requireMap(operatingDocument, "header " + operation);
