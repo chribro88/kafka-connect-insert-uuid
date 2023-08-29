@@ -163,8 +163,8 @@ public abstract class HeaderFromBson<R extends ConnectRecord<R>> implements Tran
         if (!(operatingValue instanceof byte[])) {
             throw new UnsupportedOperationException(String.format("Output format is type %s. Please set \"output.format.key/value\": \"bson\"", operatingValue.getClass().getName()));
         }
-        System.out.println("PRINT " + new String((byte[]) operatingValue));
-        System.out.println("PRINT " + new String(Base64.getEncoder().encode((byte[]) operatingValue)));
+        // System.out.println("PRINT " + new String((byte[]) operatingValue));
+        // System.out.println("PRINT " + new String(Base64.getEncoder().encode((byte[]) operatingValue)));
         Document operatingDocument = BsonToBinary.toDocument((byte[]) operatingValue);
         Headers updatedHeaders = record.headers().duplicate();
         Map<String, Object> value = Requirements.requireMap(operatingDocument, "header " + operation);

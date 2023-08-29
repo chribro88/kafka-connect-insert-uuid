@@ -1,0 +1,9 @@
+/workspace/kafka-connect-insert-uuid/src/main/java/com/github/chribro88/kafka/connect/smt/field/FieldSyntaxVersion.java
+/workspace/kafka-connect-insert-uuid/src/main/java/com/github/chribro88/kafka/connect/smt/field/MultiFieldPaths.java
+/workspace/kafka-connect-insert-uuid/src/main/java/com/github/chribro88/kafka/connect/smt/field/StructValueUpdater.java
+/workspace/kafka-connect-insert-uuid/src/main/java/com/github/chribro88/kafka/connect/smt/ExtendedConfigDef.java
+/workspace/kafka-connect-insert-uuid/src/main/java/com/github/chribro88/kafka/connect/smt/field/StructSchemaUpdater.java
+/workspace/kafka-connect-insert-uuid/src/main/java/com/github/chribro88/kafka/connect/smt/field/SingleFieldPath.java
+/workspace/kafka-connect-insert-uuid/src/main/java/com/github/chribro88/kafka/connect/smt/field/MapValueUpdater.java
+/workspace/kafka-connect-insert-uuid/src/main/java/com/github/chribro88/kafka/connect/smt/HeaderFromBson.java
+/workspace/kafka-connect-insert-uuid/src/main/java/com/github/chribro88/kafka/connect/smt/BsonToBinary.java
