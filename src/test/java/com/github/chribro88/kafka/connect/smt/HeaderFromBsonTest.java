@@ -137,7 +137,7 @@ public class HeaderFromBsonTest {
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -153,7 +153,7 @@ public class HeaderFromBsonTest {
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
@@ -163,19 +163,36 @@ public class HeaderFromBsonTest {
                     ));
             result.add(
                     Arguments.of(
+                            "basic copy and remove",
+                            testKeyTransform,
+                            new RecordBuilder()
+                                    .withField("field1", STRING_SCHEMA, "field1-value")
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value"),
+                            singletonList("field1"), singletonList("inserted1"), singletonList("field1"),
+                            HeaderFromBson.Operation.COPY,
+                            new RecordBuilder()
+                                    // field1 got removed
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value")
+                                    .addHeader("inserted1", STRING_SCHEMA, "field1-value")
+                    ));        
+            result.add(
+                    Arguments.of(
                             "copy with preexisting header",
                             testKeyTransform,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value")
                                     .addHeader("inserted1", STRING_SCHEMA, "field1-value")
+                            
                     ));
             result.add(
                     Arguments.of(
@@ -185,7 +202,7 @@ public class HeaderFromBsonTest {
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
@@ -202,7 +219,7 @@ public class HeaderFromBsonTest {
                                     .withField("field1", null, struct)
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", null, struct)
@@ -218,10 +235,26 @@ public class HeaderFromBsonTest {
                                     .withField("field1", null, struct)
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value")
+                                    .addHeader("inserted1", null, struct)
+                    ));
+            result.add(
+                    Arguments.of(
+                            "copy and remove with struct value",
+                            testKeyTransform,
+                            new RecordBuilder()
+                                    .withField("field1", null, struct)
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value"),
+                            singletonList("field1"), singletonList("inserted1"), singletonList("field1"),
+                            HeaderFromBson.Operation.COPY,
+                            new RecordBuilder()
+                                    // field1 got removed
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value")
                                     .addHeader("inserted1", null, struct)
@@ -235,7 +268,7 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
-                            asList("field1", "field1"), asList("inserted1", "inserted2"),
+                            asList("field1", "field1"), asList("inserted1", "inserted2"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
@@ -253,7 +286,7 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
-                            asList("field1", "field2"), asList("inserted1", "inserted1"),
+                            asList("field1", "field2"), asList("inserted1", "inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 and field2 got moved
@@ -278,7 +311,7 @@ public class HeaderFromBsonTest {
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -294,7 +327,7 @@ public class HeaderFromBsonTest {
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
@@ -304,13 +337,29 @@ public class HeaderFromBsonTest {
                     ));
             result.add(
                     Arguments.of(
+                            "basic copy and remove",
+                            testKeyTransform,
+                            new RecordBuilder()
+                                    .withField("field1", STRING_SCHEMA, "field1-value")
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value"),
+                            singletonList("field1"), singletonList("inserted1"), singletonList("field1"),
+                            HeaderFromBson.Operation.COPY,
+                            new RecordBuilder()
+                                    // field1 got removed
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value")
+                                    .addHeader("inserted1", STRING_SCHEMA, "field1-value")
+                    ));        
+            result.add(
+                    Arguments.of(
                             "copy with preexisting header",
                             testKeyTransform,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -326,7 +375,7 @@ public class HeaderFromBsonTest {
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
@@ -344,7 +393,7 @@ public class HeaderFromBsonTest {
                                     .withField("field1", schema, struct)
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", schema, struct)
@@ -360,7 +409,7 @@ public class HeaderFromBsonTest {
                                     .withField("field1", schema, struct)
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("field1"), singletonList("inserted1"),
+                            singletonList("field1"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
@@ -370,6 +419,22 @@ public class HeaderFromBsonTest {
                     ));
             result.add(
                     Arguments.of(
+                            "copy and remove with struct value",
+                            testKeyTransform,
+                            new RecordBuilder()
+                                    .withField("field1", schema, struct)
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value"),
+                            singletonList("field1"), singletonList("inserted1"), singletonList("field1"),
+                            HeaderFromBson.Operation.COPY,
+                            new RecordBuilder()
+                                    // field1 got removed
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value")
+                                    .addHeader("inserted1", schema, struct)
+                    ));        
+            result.add(
+                    Arguments.of(
                             "two headers from same field",
                             testKeyTransform,
                             new RecordBuilder()
@@ -377,7 +442,7 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
-                            asList("field1", "field1"), asList("inserted1", "inserted2"),
+                            asList("field1", "field1"), asList("inserted1", "inserted2"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 got moved
@@ -395,7 +460,7 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
-                            asList("field1", "field2"), asList("inserted1", "inserted1"),
+                            asList("field1", "field2"), asList("inserted1", "inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     // field1 and field2 got moved
@@ -427,7 +492,7 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .withField("foo", null, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("foo.bar"), singletonList("inserted1"),
+                            singletonList("foo.bar"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -445,13 +510,50 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .withField("foo", null, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("foo.bar"), singletonList("inserted1"),
+                            singletonList("foo.bar"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     // foo.bar got moved
                                     .withField("foo", null, onlyBaz)
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value")
+                                    .addHeader("inserted1", STRING_SCHEMA, "bar-value")
+                    ));
+            result.add(
+                    Arguments.of(
+                            "basic copy and remove with nested",
+                            testKeyTransform,
+                            new RecordBuilder()
+                                    .withField("field1", STRING_SCHEMA, "field1-value")
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    .withField("foo", null, foo)
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value"),
+                            singletonList("foo.bar"), singletonList("inserted1"), singletonList("foo.bar"),
+                            HeaderFromBson.Operation.COPY,
+                            new RecordBuilder()
+                                    .withField("field1", STRING_SCHEMA, "field1-value")
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    // foo.bar got removed
+                                    .withField("foo", null, onlyBaz)
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value")
+                                    .addHeader("inserted1", STRING_SCHEMA, "bar-value")
+                    ));
+             result.add(
+                    Arguments.of(
+                            "basic copy and remove",
+                            testKeyTransform,
+                            new RecordBuilder()
+                                    .withField("field1", STRING_SCHEMA, "field1-value")
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    .withField("foo", null, foo)
+                                    .addHeader("header1", STRING_SCHEMA, "existing-value"),
+                            singletonList("foo.bar"), singletonList("inserted1"), singletonList("foo"),
+                            HeaderFromBson.Operation.COPY,
+                            new RecordBuilder()
+                                    .withField("field1", STRING_SCHEMA, "field1-value")
+                                    .withField("field2", STRING_SCHEMA, "field2-value")
+                                    // foo got moved
                                     .addHeader("header1", STRING_SCHEMA, "existing-value")
                                     .addHeader("inserted1", STRING_SCHEMA, "bar-value")
                     ));
@@ -464,7 +566,7 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .withField("foo", null, foo)
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
-                            singletonList("foo.bar"), singletonList("inserted1"),
+                            singletonList("foo.bar"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -482,7 +584,7 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .withField("foo", null, foo)
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
-                            singletonList("foo.bar"), singletonList("inserted1"),
+                            singletonList("foo.bar"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -502,7 +604,7 @@ public class HeaderFromBsonTest {
                                     .withField("foo", null, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
-                            asList("foo.bar", "foo.bar"), asList("inserted1", "inserted2"),
+                            asList("foo.bar", "foo.bar"), asList("inserted1", "inserted2"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -523,7 +625,7 @@ public class HeaderFromBsonTest {
                                     .withField("foo", null, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
-                            asList("foo.bar", "foo.baz"), asList("inserted1", "inserted1"),
+                            asList("foo.bar", "foo.baz"), asList("inserted1", "inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -567,7 +669,7 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .withField("foo", fooSchema, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("foo.bar"), singletonList("inserted1"),
+                            singletonList("foo.bar"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -585,7 +687,7 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .withField("foo", fooSchema, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
-                            singletonList("foo.bar"), singletonList("inserted1"),
+                            singletonList("foo.bar"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -604,7 +706,7 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .withField("foo", fooSchema, foo)
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
-                            singletonList("foo.bar"), singletonList("inserted1"),
+                            singletonList("foo.bar"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.COPY,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -622,7 +724,7 @@ public class HeaderFromBsonTest {
                                     .withField("field2", STRING_SCHEMA, "field2-value")
                                     .withField("foo", fooSchema, foo)
                                     .addHeader("inserted1", STRING_SCHEMA, "existing-value"),
-                            singletonList("foo.bar"), singletonList("inserted1"),
+                            singletonList("foo.bar"), singletonList("inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -642,7 +744,7 @@ public class HeaderFromBsonTest {
                                     .withField("foo", fooSchema, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
-                            asList("foo.bar", "foo.bar"), asList("inserted1", "inserted2"),
+                            asList("foo.bar", "foo.bar"), asList("inserted1", "inserted2"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -663,7 +765,7 @@ public class HeaderFromBsonTest {
                                     .withField("foo", fooSchema, foo)
                                     .addHeader("header1", STRING_SCHEMA, "existing-value"),
                             // two headers from the same field
-                            asList("foo.bar", "foo.baz"), asList("inserted1", "inserted1"),
+                            asList("foo.bar", "foo.baz"), asList("inserted1", "inserted1"), emptyList(),
                             HeaderFromBson.Operation.MOVE,
                             new RecordBuilder()
                                     .withField("field1", STRING_SCHEMA, "field1-value")
@@ -685,12 +787,31 @@ public class HeaderFromBsonTest {
     }
 
     private Map<String, Object> config(List<String> headers, List<String> transformFields,
+            List<String> removeFields, 
+            HeaderFromBson.Operation operation) {
+        return config(headers, transformFields, removeFields, operation, FieldSyntaxVersion.V1);
+    }
+
+    private Map<String, Object> config(List<String> headers, List<String> transformFields, 
+            List<String> removeFields,
             HeaderFromBson.Operation operation, FieldSyntaxVersion version) {
         Map<String, Object> result = new HashMap<>();
         result.put(HeaderFromBson.HEADERS_FIELD, headers);
         result.put(HeaderFromBson.FIELDS_FIELD, transformFields);
         result.put(HeaderFromBson.OPERATION_FIELD, operation.toString());
         result.put(FieldSyntaxVersion.FIELD_SYNTAX_VERSION_CONFIG, version.name());
+        result.put(HeaderFromBson.REMOVES_FIELD, removeFields);
+        return result;
+    }
+
+     private Map<String, Object> config(List<String> headers, List<String> transformFields, 
+            HeaderFromBson.Operation operation, FieldSyntaxVersion version) {
+        Map<String, Object> result = new HashMap<>();
+        result.put(HeaderFromBson.HEADERS_FIELD, headers);
+        result.put(HeaderFromBson.FIELDS_FIELD, transformFields);
+        result.put(HeaderFromBson.OPERATION_FIELD, operation.toString());
+        result.put(FieldSyntaxVersion.FIELD_SYNTAX_VERSION_CONFIG, version.name());
+        result.put(HeaderFromBson.REMOVES_FIELD, emptyList());
         return result;
     }
 
@@ -700,13 +821,13 @@ public class HeaderFromBsonTest {
             String description,
             boolean keyTransform,
             RecordBuilder originalBuilder,
-            List<String> transformFields, List<String> headers1, HeaderFromBson.Operation operation,
+            List<String> transformFields, List<String> headers1, List<String> removeFields, HeaderFromBson.Operation operation,
             RecordBuilder expectedBuilder
     ) {
         HeaderFromBson<SourceRecord> xform =
                 keyTransform ? new HeaderFromBson.Key<>() : new HeaderFromBson.Value<>();
 
-        xform.configure(config(headers1, transformFields, operation));
+        xform.configure(config(headers1, transformFields, removeFields, operation));
         ConnectHeaders headers = new ConnectHeaders();
         headers.addString("existing", "existing-value");
 
@@ -723,13 +844,13 @@ public class HeaderFromBsonTest {
             String description,
             boolean keyTransform,
             RecordBuilder originalBuilder,
-            List<String> transformFields, List<String> headers1, HeaderFromBson.Operation operation,
+            List<String> transformFields, List<String> headers1, List<String> removeFields, HeaderFromBson.Operation operation,
             RecordBuilder expectedBuilder
     ) {
         HeaderFromBson<SourceRecord> xform =
                 keyTransform ? new HeaderFromBson.Key<>() : new HeaderFromBson.Value<>();
 
-        xform.configure(config(headers1, transformFields, operation, FieldSyntaxVersion.V2));
+        xform.configure(config(headers1, transformFields, removeFields, operation, FieldSyntaxVersion.V2));
         ConnectHeaders headers = new ConnectHeaders();
         headers.addString("existing", "existing-value");
 

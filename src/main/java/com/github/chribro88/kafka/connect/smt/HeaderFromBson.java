@@ -50,8 +50,10 @@ import org.bson.Document;
 import com.github.chribro88.kafka.connect.smt.field.FieldSyntaxVersion;
 import com.github.chribro88.kafka.connect.smt.field.MultiFieldPaths;
 import com.github.chribro88.kafka.connect.smt.field.SingleFieldPath;
+import com.github.chribro88.kafka.connect.smt.validators.ListValidator;
 
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 import static org.apache.kafka.common.config.ConfigDef.NO_DEFAULT_VALUE;
 
 public abstract class HeaderFromBson<R extends ConnectRecord<R>> implements Transformation<R> {
@@ -61,6 +63,7 @@ public abstract class HeaderFromBson<R extends ConnectRecord<R>> implements Tran
     public static final String OPERATION_FIELD = "operation";
     private static final String MOVE_OPERATION = "move";
     private static final String COPY_OPERATION = "copy";
+    public static final String REMOVES_FIELD = "remove";
 
     public static final String OVERVIEW_DOC =
             "Moves or copies fields in the key/value of a record into that record's headers. " +
@@ -83,7 +86,11 @@ public abstract class HeaderFromBson<R extends ConnectRecord<R>> implements Tran
             .define(OPERATION_FIELD, ConfigDef.Type.STRING, NO_DEFAULT_VALUE,
                     ConfigDef.ValidString.in(MOVE_OPERATION, COPY_OPERATION), ConfigDef.Importance.HIGH,
                     "Either <code>move</code> if the fields are to be moved to the headers (removed from the key/value), " +
-                            "or <code>copy</code> if the fields are to be copied to the headers (retained in the key/value).");
+                            "or <code>copy</code> if the fields are to be copied to the headers (retained in the key/value).")
+            .define(REMOVES_FIELD, ConfigDef.Type.LIST,
+                    emptyList(), new ListValidator(),
+                    ConfigDef.Importance.LOW,
+                    "Field names in the record whose values are to be removed. Used to tidy up temporary objects holding header fields.");
 
     enum Operation {
         MOVE(MOVE_OPERATION),
@@ -115,6 +122,10 @@ public abstract class HeaderFromBson<R extends ConnectRecord<R>> implements Tran
 
     private Map<String, List<SingleFieldPath>> headersMap;
 
+    private MultiFieldPaths removePaths;
+
+    private boolean hasRemove;
+
     private Operation operation;
 
     private final Cache<Schema, Schema> moveSchemaCache = new SynchronizedCache<>(new LRUCache<>(16));
@@ -145,6 +156,11 @@ public abstract class HeaderFromBson<R extends ConnectRecord<R>> implements Tran
             });
         }
         operation = Operation.fromName(config.getString(OPERATION_FIELD));
+
+        List<String> remove = config.getList(REMOVES_FIELD);
+        hasRemove = !remove.isEmpty();
+        removePaths = MultiFieldPaths.of(remove, syntaxVersion);
+        
     }
 
     @Override
@@ -176,6 +192,12 @@ public abstract class HeaderFromBson<R extends ConnectRecord<R>> implements Tran
                     (original, map, fieldPath, fieldName) -> map.remove(fieldName)
             );
         }
+        if (hasRemove) {
+            updatedValue = removePaths.updateValuesFrom(
+                    updatedValue,
+                    (original, map, fieldPath, fieldName) -> map.remove(fieldName)
+            );
+        }
         for (Map.Entry<String, List<SingleFieldPath>> entry : headersMap.entrySet()) {
             // headers may point to many values, though it's usually close to 1
             for (SingleFieldPath fieldPath : entry.getValue()) {
@@ -183,6 +205,7 @@ public abstract class HeaderFromBson<R extends ConnectRecord<R>> implements Tran
                 updatedHeaders.add(entry.getKey(), fieldAndValue != null ? fieldAndValue.getValue() : null, null);
             }
         }
+
         return newRecord(record, operatingSchema, BsonToBinary.toBytes(new Document(updatedValue)), updatedHeaders);
     }
 
@@ -197,6 +220,12 @@ public abstract class HeaderFromBson<R extends ConnectRecord<R>> implements Tran
         Map<SingleFieldPath, Map.Entry<String, Object>> values = fieldPaths.fieldAndValuesFrom(value);
         if (operation == Operation.MOVE) {
             updatedValue = fieldPaths.updateValuesFrom(
+                    updatedValue,
+                    (original, map, fieldPath, fieldName) -> map.remove(fieldName)
+            );
+        }
+        if (hasRemove) {
+            updatedValue = removePaths.updateValuesFrom(
                     updatedValue,
                     (original, map, fieldPath, fieldName) -> map.remove(fieldName)
             );
